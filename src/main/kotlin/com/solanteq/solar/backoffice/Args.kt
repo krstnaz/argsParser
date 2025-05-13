@@ -1,5 +1,7 @@
 package com.solanteq.solar.backoffice
 
+import com.solanteq.solar.backoffice.exception.ArgsException
+import com.solanteq.solar.backoffice.exception.ParseException
 import com.solanteq.solar.backoffice.marshaller.ArgumentMarshaller
 import com.solanteq.solar.backoffice.marshaller.BooleanArgumentMarshaller
 import com.solanteq.solar.backoffice.marshaller.IntArgumentMarshaller
@@ -23,8 +25,6 @@ class Args {
     enum class ErrorCode {
         OK, MISSING_STRING, MISSING_INT, INVALID_INT
     }
-
-    class ParseException(message: String) : Exception(message)
 
     private var errorCode = ErrorCode.OK
 
@@ -128,11 +128,11 @@ class Args {
     private fun setArgument(argChar: Char): Boolean {
         var set = true
         if (isBoolean(argChar)) {
-            setBooleanArg(argChar, true)
+            setBooleanArg(argChar)
         } else if (isString(argChar)) {
-            setStringArg(argChar, "")
+            setStringArg(argChar)
         } else if (isInt(argChar)) {
-            setIntArg(argChar, 0)
+            setIntArg(argChar)
         } else {
             set = false
         }
@@ -143,7 +143,7 @@ class Args {
         return stringArgs.containsKey(argChar)
     }
 
-    private fun setStringArg(argChar: Char, s: String) {
+    private fun setStringArg(argChar: Char) {
         currentArgument++
         try {
             stringArgs[argChar]?.set(args[currentArgument])
@@ -158,23 +158,29 @@ class Args {
         return booleanArgs.containsKey(argChar)
     }
 
-    private fun setBooleanArg(argChar: Char, value: Boolean) {
-        booleanArgs[argChar]?.set(value)
+    private fun setBooleanArg(argChar: Char) {
+        try {
+            booleanArgs[argChar]?.set()
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            valid = false
+            errorArgument = argChar
+            errorCode = ErrorCode.MISSING_INT
+        }
     }
 
     private fun isInt(argChar: Char): Boolean {
         return intArgs.containsKey(argChar)
     }
 
-    private fun setIntArg(argChar: Char, s: Int) {
+    private fun setIntArg(argChar: Char) {
         currentArgument++
         try {
-            intArgs[argChar]?.set(Integer.parseInt(args[currentArgument]))
+            intArgs[argChar]?.set(args[currentArgument])
         } catch (e: ArrayIndexOutOfBoundsException) {
             valid = false
             errorArgument = argChar
             errorCode = ErrorCode.MISSING_INT
-        } catch (e: NumberFormatException) {
+        } catch (e: ArgsException) {
             valid = false
             errorArgument = argChar
             errorCode = ErrorCode.INVALID_INT
