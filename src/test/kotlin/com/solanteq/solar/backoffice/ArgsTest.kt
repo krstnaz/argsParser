@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
  */
 class ArgsTest {
     @Test
-    fun parseBoolean() {
+    fun `parse - boolean args with incorrect value - correct results`() {
         val schema = "a,b,d"
         val args = Array(3) { "" }
         args[0] = "-a"
@@ -44,7 +44,7 @@ class ArgsTest {
     }
 
     @Test
-    fun parseString() {
+    fun `parse - string args with incorrect value - correct results`() {
         val schema = "a*,b*,d*"
         val args = Array(6) { "" }
         args[0] = "-a"
@@ -81,7 +81,7 @@ class ArgsTest {
     }
 
     @Test
-    fun parseInt() {
+    fun `parse - int args with incorrect value - correct results`() {
         val schema = "a#,b#,d#,f#"
         val args = Array(8) { "" }
         args[0] = "-a"
@@ -120,5 +120,56 @@ class ArgsTest {
 
         println("int value for f: ${argsParser.getInt('f')}")
         assertEquals(0, argsParser.getInt('f'))
+    }
+
+    @Test
+    fun `parse - different type args - correct results`() {
+        val schema = "a,b*,c#"
+        val args = Array(5) { "" }
+        args[0] = "-a"
+        args[1] = "-b"
+        args[2] = "someString"
+        args[3] = "-c"
+        args[4] = "7"
+        val argsParser = Args(schema, args)
+
+        println("is valid: ${argsParser.isValid()}")
+        assertTrue(argsParser.isValid())
+
+        println("cardinality: ${argsParser.cardinality()}")
+        assertEquals(3, argsParser.cardinality())
+
+        println("usage: ${argsParser.usage()}")
+        assertEquals("-[a,b*,c#]", argsParser.usage())
+
+        println("boolean value for a: ${argsParser.getBoolean('a')}")
+        assertTrue(argsParser.getBoolean('a'))
+
+        println("string value for b: ${argsParser.getString('b')}")
+        assertEquals("someString", argsParser.getString('b'))
+
+        println("int value for c: ${argsParser.getInt('c')}")
+        assertEquals(7, argsParser.getInt('c'))
+    }
+
+    @Test
+    fun `parse - when unknown schema`() {
+        val schema = "a!"
+        val args = Array(2) { "" }
+        args[0] = "-a"
+        args[1] = "test"
+        val argsParser = Args(schema, args)
+
+        println("is valid: ${argsParser.isValid()}")
+        assertFalse(argsParser.isValid())
+
+        println("cardinality: ${argsParser.cardinality()}")
+        assertEquals(0, argsParser.cardinality())
+
+        println("usage: ${argsParser.usage()}")
+        assertEquals("-[a!]", argsParser.usage())
+
+        println("boolean value for a: ${argsParser.getString('a')}")
+        assertTrue(argsParser.getString('a').isEmpty())
     }
 }

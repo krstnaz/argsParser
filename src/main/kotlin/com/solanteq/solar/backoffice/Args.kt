@@ -13,11 +13,9 @@ import com.solanteq.solar.backoffice.marshaller.StringArgumentMarshaller
 class Args {
     private val schema: String
     private val args: Array<String>
-    private var valid: Boolean
+    private var valid: Boolean = true
     private val unexpectedArguments = sortedSetOf<Char>()
-    private val booleanArgs = mutableMapOf<Char, ArgumentMarshaller<Boolean>>()
-    private val stringArgs = mutableMapOf<Char, ArgumentMarshaller<String>>()
-    private val intArgs = mutableMapOf<Char, ArgumentMarshaller<Int>>()
+    private val marshallers = mutableMapOf<Char, ArgumentMarshaller<*>>()
     private val argsFound = mutableSetOf<Char>()
     private var currentArgument = 0
     private var errorArgument = '0'
@@ -73,7 +71,7 @@ class Args {
     }
 
     private fun parseStringSchemaElement(elementId: Char) {
-        stringArgs[elementId] = StringArgumentMarshaller()
+        marshallers[elementId] = StringArgumentMarshaller()
     }
 
     private fun isStringSchemaElement(elementTail: String): Boolean {
@@ -85,7 +83,7 @@ class Args {
     }
 
     private fun parseBooleanSchemaElement(elementId: Char) {
-        booleanArgs[elementId] = BooleanArgumentMarshaller()
+        marshallers[elementId] = BooleanArgumentMarshaller()
     }
 
     private fun isIntSchemaElement(elementTail: String): Boolean {
@@ -93,7 +91,7 @@ class Args {
     }
 
     private fun parseIntSchemaElement(elementId: Char) {
-        intArgs[elementId] = IntArgumentMarshaller()
+        marshallers[elementId] = IntArgumentMarshaller()
     }
 
     private fun parseArguments(): Boolean {
@@ -127,63 +125,55 @@ class Args {
 
     private fun setArgument(argChar: Char): Boolean {
         var set = true
-        if (isBoolean(argChar)) {
-            setBooleanArg(argChar)
-        } else if (isString(argChar)) {
-            setStringArg(argChar)
-        } else if (isInt(argChar)) {
-            setIntArg(argChar)
-        } else {
-            set = false
+        val marshaller = marshallers[argChar]
+        try {
+            when (marshaller) {
+                is BooleanArgumentMarshaller -> {
+                    setBooleanArg(marshaller)
+                }
+
+                is StringArgumentMarshaller -> {
+                    setStringArg(marshaller)
+                }
+
+                is IntArgumentMarshaller -> {
+                    setIntArg(marshaller)
+                }
+
+                else -> {
+                    set = false
+                }
+            }
+        } catch (e: ArgsException) {
+            valid = false
+            errorArgument = argChar
         }
         return set
     }
 
-    private fun isString(argChar: Char): Boolean {
-        return stringArgs.containsKey(argChar)
-    }
-
-    private fun setStringArg(argChar: Char) {
+    private fun setStringArg(marshaller: ArgumentMarshaller<*>?) {
         currentArgument++
         try {
-            stringArgs[argChar]?.set(args[currentArgument])
+            marshaller?.set(args[currentArgument])
         } catch (e: ArrayIndexOutOfBoundsException) {
-            valid = false
-            errorArgument = argChar
             errorCode = ErrorCode.MISSING_STRING
+            throw ArgsException()
         }
     }
 
-    private fun isBoolean(argChar: Char): Boolean {
-        return booleanArgs.containsKey(argChar)
-    }
+    private fun setBooleanArg(marshaller: ArgumentMarshaller<*>?) = marshaller?.set()
 
-    private fun setBooleanArg(argChar: Char) {
-        try {
-            booleanArgs[argChar]?.set()
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            valid = false
-            errorArgument = argChar
-            errorCode = ErrorCode.MISSING_INT
-        }
-    }
-
-    private fun isInt(argChar: Char): Boolean {
-        return intArgs.containsKey(argChar)
-    }
-
-    private fun setIntArg(argChar: Char) {
+    private fun setIntArg(marshaller: ArgumentMarshaller<*>?) {
         currentArgument++
         try {
-            intArgs[argChar]?.set(args[currentArgument])
+            marshaller?.set(args[currentArgument])
         } catch (e: ArrayIndexOutOfBoundsException) {
-            valid = false
-            errorArgument = argChar
             errorCode = ErrorCode.MISSING_INT
+            throw ArgsException()
         } catch (e: ArgsException) {
             valid = false
-            errorArgument = argChar
             errorCode = ErrorCode.INVALID_INT
+            throw e
         }
     }
 
@@ -204,6 +194,7 @@ class Args {
             unexpectedArgumentMessage()
         } else {
             when (errorCode) {
+                // TODO Fix when several unexpected arguments
                 ErrorCode.MISSING_STRING -> "Could not find string parameter for -$errorArgument."
                 ErrorCode.MISSING_INT -> "Could not find int parameter for -$errorArgument."
                 ErrorCode.INVALID_INT -> "Invalid int parameter for -$errorArgument."
@@ -222,18 +213,18 @@ class Args {
     }
 
     fun getBoolean(arg: Char): Boolean {
-        val am = booleanArgs[arg]
-        return am != null && am.get()
+        val am = marshallers[arg]
+        return am != null && am.get() as? Boolean ?: false
     }
 
     fun getString(arg: Char): String {
-        val am = stringArgs[arg]
-        return am?.get() ?: ""
+        val am = marshallers[arg]
+        return am?.get() as? String ?: ""
     }
 
     fun getInt(arg: Char): Int {
-        val am = intArgs[arg]
-        return am?.get() ?: 0
+        val am = marshallers[arg]
+        return am?.get() as? Int ?: 0
     }
 
     fun isValid() = valid

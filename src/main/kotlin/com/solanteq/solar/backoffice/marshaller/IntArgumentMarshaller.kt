@@ -10,7 +10,7 @@ class IntArgumentMarshaller(override var value: Int = 0) : ArgumentMarshaller<In
         try {
             this.value = Integer.parseInt(value)
         } catch (e: NumberFormatException) {
-            throw ArgsException("Invalid integer format")
+            throw ArgsException("Invalid integer format for $value")
         }
     }
 }
