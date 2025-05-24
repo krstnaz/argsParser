@@ -17,6 +17,7 @@ class ArgsTest {
         args[1] = "-c"
         args[2] = "-b"
         val argsParser = Args(schema, args)
+        argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
         assertFalse(argsParser.isValid())
@@ -27,20 +28,20 @@ class ArgsTest {
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a,b,d]", argsParser.usage())
 
-        println("error message: ${argsParser.errorMessage()}")
-        assertEquals("Argument(s) - c unexpected.", argsParser.errorMessage())
+        println("error message: ${argsParser.errorMessages()}")
+        assertEquals("Argument(s) - c unexpected.", argsParser.errorMessages())
 
-        println("boolean value for a: ${argsParser.getBoolean('a')}")
-        assertTrue(argsParser.getBoolean('a'))
+        println("boolean value for a: ${argsParser.get('a')}")
+        assertTrue(argsParser.get('a') as Boolean)
 
-        println("boolean value for b: ${argsParser.getBoolean('b')}")
-        assertTrue(argsParser.getBoolean('b'))
+        println("boolean value for b: ${argsParser.get('b')}")
+        assertTrue(argsParser.get('b') as Boolean)
 
-        println("boolean value for c: ${argsParser.getBoolean('c')}")
-        assertFalse(argsParser.getBoolean('c'))
+        println("boolean value for c: ${argsParser.get('c')}")
+        assertFalse(argsParser.get('c') as Boolean)
 
-        println("boolean value for d: ${argsParser.getBoolean('d')}")
-        assertFalse(argsParser.getBoolean('d'))
+        println("boolean value for d: ${argsParser.get('d')}")
+        assertFalse(argsParser.get('d') as Boolean)
     }
 
     @Test
@@ -54,6 +55,7 @@ class ArgsTest {
         args[4] = "-b"
         args[5] = "test2"
         val argsParser = Args(schema, args)
+        argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
         assertFalse(argsParser.isValid())
@@ -64,20 +66,20 @@ class ArgsTest {
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a*,b*,d*]", argsParser.usage())
 
-        println("error message: ${argsParser.errorMessage()}")
-        assertEquals("Argument(s) - c unexpected.", argsParser.errorMessage())
+        println("error message: ${argsParser.errorMessages()}")
+        assertEquals("Argument(s) - c unexpected.", argsParser.errorMessages())
 
-        println("string value for a: ${argsParser.getString('a')}")
-        assertEquals("test1", argsParser.getString('a'))
+        println("string value for a: ${argsParser.get('a')}")
+        assertEquals("test1", argsParser.get('a'))
 
-        println("string value for b: ${argsParser.getString('b')}")
-        assertEquals("test2", argsParser.getString('b'))
+        println("string value for b: ${argsParser.get('b')}")
+        assertEquals("test2", argsParser.get('b'))
 
-        println("string value for c: ${argsParser.getString('c')}")
-        assertTrue(argsParser.getString('c').isEmpty())
+        println("string value for c: ${argsParser.get('c')}")
+        assertTrue((argsParser.get('c') as String).isEmpty())
 
-        println("string value for d: ${argsParser.getString('d')}")
-        assertTrue(argsParser.getString('d').isEmpty())
+        println("string value for d: ${argsParser.get('d')}")
+        assertTrue((argsParser.get('d') as String).isEmpty())
     }
 
     @Test
@@ -93,33 +95,34 @@ class ArgsTest {
         args[6] = "-f"
         args[7] = "notInt"
         val argsParser = Args(schema, args)
+        argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
         assertFalse(argsParser.isValid())
 
         println("cardinality: ${argsParser.cardinality()}")
-        assertEquals(3, argsParser.cardinality())
+        assertEquals(2, argsParser.cardinality())
 
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a#,b#,d#,f#]", argsParser.usage())
 
-        println("error message: ${argsParser.errorMessage()}")
-        assertEquals("Argument(s) - c unexpected.", argsParser.errorMessage())
+        println("error message: ${argsParser.errorMessages()}")
+        assertEquals("Argument(s) - c unexpected.\nInvalid int parameter for -f.", argsParser.errorMessages())
 
-        println("int value for a: ${argsParser.getInt('a')}")
-        assertEquals(1, argsParser.getInt('a'))
+        println("int value for a: ${argsParser.get('a')}")
+        assertEquals(1, argsParser.get('a'))
 
-        println("int value for b: ${argsParser.getInt('b')}")
-        assertEquals(-1, argsParser.getInt('b'))
+        println("int value for b: ${argsParser.get('b')}")
+        assertEquals(-1, argsParser.get('b'))
 
-        println("int value for c: ${argsParser.getInt('c')}")
-        assertEquals(0, argsParser.getInt('c'))
+        println("int value for c: ${argsParser.get('c')}")
+        assertEquals(0, argsParser.get('c'))
 
-        println("int value for d: ${argsParser.getInt('d')}")
-        assertEquals(0, argsParser.getInt('d'))
+        println("int value for d: ${argsParser.get('d')}")
+        assertEquals(0, argsParser.get('d'))
 
-        println("int value for f: ${argsParser.getInt('f')}")
-        assertEquals(0, argsParser.getInt('f'))
+        println("int value for f: ${argsParser.get('f')}")
+        assertEquals(0, argsParser.get('f'))
     }
 
     @Test
@@ -132,6 +135,7 @@ class ArgsTest {
         args[3] = "-c"
         args[4] = "7"
         val argsParser = Args(schema, args)
+        argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
         assertTrue(argsParser.isValid())
@@ -142,14 +146,14 @@ class ArgsTest {
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a,b*,c#]", argsParser.usage())
 
-        println("boolean value for a: ${argsParser.getBoolean('a')}")
-        assertTrue(argsParser.getBoolean('a'))
+        println("boolean value for a: ${argsParser.get('a')}")
+        assertTrue(argsParser.get('a') as Boolean)
 
-        println("string value for b: ${argsParser.getString('b')}")
-        assertEquals("someString", argsParser.getString('b'))
+        println("string value for b: ${argsParser.get('b')}")
+        assertEquals("someString", argsParser.get('b'))
 
-        println("int value for c: ${argsParser.getInt('c')}")
-        assertEquals(7, argsParser.getInt('c'))
+        println("int value for c: ${argsParser.get('c')}")
+        assertEquals(7, argsParser.get('c'))
     }
 
     @Test
@@ -159,6 +163,7 @@ class ArgsTest {
         args[0] = "-a"
         args[1] = "test"
         val argsParser = Args(schema, args)
+        argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
         assertFalse(argsParser.isValid())
@@ -169,7 +174,7 @@ class ArgsTest {
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a!]", argsParser.usage())
 
-        println("boolean value for a: ${argsParser.getString('a')}")
-        assertTrue(argsParser.getString('a').isEmpty())
+        println("boolean value for a: ${argsParser.get('a')}")
+        assertTrue((argsParser.get('a') as String).isEmpty())
     }
 }

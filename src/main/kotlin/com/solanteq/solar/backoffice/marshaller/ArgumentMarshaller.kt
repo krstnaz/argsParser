@@ -6,7 +6,7 @@ package com.solanteq.solar.backoffice.marshaller
 abstract class ArgumentMarshaller<T> {
     abstract var value: T
 
-    abstract fun set(value: String = "true")
+    abstract fun set(currentArgument: Iterator<String>? = null): Boolean
 
     fun get() = value
 }

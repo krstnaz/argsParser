@@ -1,6 +1,3 @@
 package com.solanteq.solar.backoffice.exception
 
-/**
- * @since %CURRENT_VERSION%
- */
-class ArgsException(message: String? = null) : Exception(message)
+class ArgsException(override val message: String? = null, val errorCode: ErrorCode = ErrorCode.OK) : Exception(message)

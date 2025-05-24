@@ -1,10 +1,21 @@
 package com.solanteq.solar.backoffice.marshaller
 
+import com.solanteq.solar.backoffice.exception.ArgsException
+import com.solanteq.solar.backoffice.exception.ErrorCode
+
 /**
  * @since %CURRENT_VERSION%
  */
 class StringArgumentMarshaller(override var value: String = "") : ArgumentMarshaller<String>() {
-    override fun set(value: String) {
-        this.value = value
+    override fun set(currentArgument: Iterator<String>?): Boolean {
+        try {
+            this.value = currentArgument?.next() ?: ""
+            return true
+        } catch (e: NoSuchElementException) {
+            throw ArgsException(
+                message = "the iteration has no more elements",
+                errorCode = ErrorCode.MISSING_STRING
+            )
+        }
     }
 }

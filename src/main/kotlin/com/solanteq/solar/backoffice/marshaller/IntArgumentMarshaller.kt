@@ -1,16 +1,27 @@
 package com.solanteq.solar.backoffice.marshaller
 
 import com.solanteq.solar.backoffice.exception.ArgsException
+import com.solanteq.solar.backoffice.exception.ErrorCode
 
 /**
  * @since %CURRENT_VERSION%
  */
 class IntArgumentMarshaller(override var value: Int = 0) : ArgumentMarshaller<Int>() {
-    override fun set(value: String) {
+    override fun set(currentArgument: Iterator<String>?): Boolean {
         try {
-            this.value = Integer.parseInt(value)
+            val currentValue = currentArgument?.next()
+            this.value = Integer.parseInt(currentValue)
+            return true
+        } catch (e: NoSuchElementException) {
+            throw ArgsException(
+                message = "the iteration has no more elements",
+                errorCode = ErrorCode.MISSING_INT
+            )
         } catch (e: NumberFormatException) {
-            throw ArgsException("Invalid integer format for $value")
+            throw ArgsException(
+                message = "Invalid integer format for $value",
+                errorCode = ErrorCode.INVALID_INT
+            )
         }
     }
 }

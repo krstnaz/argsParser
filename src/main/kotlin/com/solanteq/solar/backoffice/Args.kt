@@ -1,6 +1,7 @@
 package com.solanteq.solar.backoffice
 
 import com.solanteq.solar.backoffice.exception.ArgsException
+import com.solanteq.solar.backoffice.exception.ErrorTracker
 import com.solanteq.solar.backoffice.exception.ParseException
 import com.solanteq.solar.backoffice.marshaller.ArgumentMarshaller
 import com.solanteq.solar.backoffice.marshaller.BooleanArgumentMarshaller
@@ -12,43 +13,32 @@ import com.solanteq.solar.backoffice.marshaller.StringArgumentMarshaller
  */
 class Args {
     private val schema: String
-    private val args: Array<String>
-    private var valid: Boolean = true
-    private val unexpectedArguments = sortedSetOf<Char>()
+    private val args: List<String>
     private val marshallers = mutableMapOf<Char, ArgumentMarshaller<*>>()
     private val argsFound = mutableSetOf<Char>()
-    private var currentArgument = 0
-    private var errorArgument = '0'
-
-    enum class ErrorCode {
-        OK, MISSING_STRING, MISSING_INT, INVALID_INT
-    }
-
-    private var errorCode = ErrorCode.OK
+    private val errorTracker: ErrorTracker = ErrorTracker()
+    private lateinit var currentArgument: Iterator<String>
 
     constructor(schema: String, args: Array<String>) {
         this.schema = schema
-        this.args = args
-        this.valid = parse()
+        this.args = listOf(*args)
     }
 
-    private fun parse(): Boolean {
+    fun parse() {
         if (schema.isEmpty() && args.isEmpty()) {
-            return true
+            return
         }
         parseSchema()
         parseArguments()
-        return valid
     }
 
-    private fun parseSchema(): Boolean {
+    private fun parseSchema() {
         for (element in schema.split(",")) {
             if (element.isNotEmpty()) {
                 val trimmedElement = element.trim()
                 parseSchemaElement(trimmedElement)
             }
         }
-        return true
     }
 
     private fun parseSchemaElement(element: String) {
@@ -95,9 +85,10 @@ class Args {
     }
 
     private fun parseArguments(): Boolean {
-        for (i in args.indices) {
-            currentArgument = i
-            parseArgument(args[i])
+        currentArgument = args.iterator()
+        while (currentArgument.hasNext()) {
+            val arg = currentArgument.next()
+            parseArgument(arg)
         }
         return true
     }
@@ -110,70 +101,27 @@ class Args {
 
     private fun parseElements(arg: String) {
         for (i in 1..<arg.length) {
-            parseElement(arg[i])
+            if (marshallers.containsKey(arg[i])) {
+                parseElement(arg[i])
+            } else {
+                errorTracker.addUnexpectedArgument(arg[i])
+            }
         }
     }
 
     private fun parseElement(argChar: Char) {
         if (setArgument(argChar)) {
             argsFound.add(argChar)
-        } else {
-            unexpectedArguments.add(argChar)
-            valid = false
         }
     }
 
     private fun setArgument(argChar: Char): Boolean {
-        var set = true
         val marshaller = marshallers[argChar]
         try {
-            when (marshaller) {
-                is BooleanArgumentMarshaller -> {
-                    setBooleanArg(marshaller)
-                }
-
-                is StringArgumentMarshaller -> {
-                    setStringArg(marshaller)
-                }
-
-                is IntArgumentMarshaller -> {
-                    setIntArg(marshaller)
-                }
-
-                else -> {
-                    set = false
-                }
-            }
+            return marshaller?.set(currentArgument) ?: false
         } catch (e: ArgsException) {
-            valid = false
-            errorArgument = argChar
-        }
-        return set
-    }
-
-    private fun setStringArg(marshaller: ArgumentMarshaller<*>?) {
-        currentArgument++
-        try {
-            marshaller?.set(args[currentArgument])
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            errorCode = ErrorCode.MISSING_STRING
-            throw ArgsException()
-        }
-    }
-
-    private fun setBooleanArg(marshaller: ArgumentMarshaller<*>?) = marshaller?.set()
-
-    private fun setIntArg(marshaller: ArgumentMarshaller<*>?) {
-        currentArgument++
-        try {
-            marshaller?.set(args[currentArgument])
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            errorCode = ErrorCode.MISSING_INT
-            throw ArgsException()
-        } catch (e: ArgsException) {
-            valid = false
-            errorCode = ErrorCode.INVALID_INT
-            throw e
+            errorTracker.addErrorArgument(argChar, e.errorCode)
+            return false
         }
     }
 
@@ -189,43 +137,24 @@ class Args {
         }
     }
 
-    fun errorMessage(): String {
-        return if (unexpectedArguments.isNotEmpty()) {
-            unexpectedArgumentMessage()
-        } else {
-            when (errorCode) {
-                // TODO Fix when several unexpected arguments
-                ErrorCode.MISSING_STRING -> "Could not find string parameter for -$errorArgument."
-                ErrorCode.MISSING_INT -> "Could not find int parameter for -$errorArgument."
-                ErrorCode.INVALID_INT -> "Invalid int parameter for -$errorArgument."
-                ErrorCode.OK -> throw Exception("TILT: Should not get here.")
-            }
-        }
-    }
+    fun errorMessages() = errorTracker.describe()
 
-    private fun unexpectedArgumentMessage(): String {
-        val message = StringBuilder("Argument(s) - ")
-        for (c in unexpectedArguments) {
-            message.append(c.toString())
-        }
-        message.append(" unexpected.")
-        return message.toString()
-    }
+    fun get(arg: Char) = marshallers[arg]?.get()
 
-    fun getBoolean(arg: Char): Boolean {
-        val am = marshallers[arg]
-        return am != null && am.get() as? Boolean ?: false
-    }
+//    fun getBoolean(arg: Char): Boolean {
+//        val am = marshallers[arg]
+//        return am != null && am.get() as? Boolean ?: false
+//    }
 
-    fun getString(arg: Char): String {
-        val am = marshallers[arg]
-        return am?.get() as? String ?: ""
-    }
+//    fun getString(arg: Char): String {
+//        val am = marshallers[arg]
+//        return am?.get() as? String ?: ""
+//    }
 
-    fun getInt(arg: Char): Int {
-        val am = marshallers[arg]
-        return am?.get() as? Int ?: 0
-    }
+//    fun getInt(arg: Char): Int {
+//        val am = marshallers[arg]
+//        return am?.get() as? Int ?: 0
+//    }
 
-    fun isValid() = valid
+    fun isValid() = errorTracker.hasProblems()
 }
