@@ -24,7 +24,7 @@ class ErrorTracker {
         }
     }
 
-    fun hasProblems() = valid
+    fun noProblems() = valid
 
     fun describe(): String {
         val unexpectedArgumentDescription = getUnexpectedArgumentDescription()

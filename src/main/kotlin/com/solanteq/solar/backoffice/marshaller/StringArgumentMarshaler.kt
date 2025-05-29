@@ -6,7 +6,7 @@ import com.solanteq.solar.backoffice.exception.ErrorCode
 /**
  * @since %CURRENT_VERSION%
  */
-class StringArgumentMarshaller(override var value: String = "") : ArgumentMarshaller<String>() {
+class StringArgumentMarshaler(override var value: String = "") : ArgumentMarshaler<String>() {
     override fun set(currentArgument: Iterator<String>?): Boolean {
         try {
             this.value = currentArgument?.next() ?: ""

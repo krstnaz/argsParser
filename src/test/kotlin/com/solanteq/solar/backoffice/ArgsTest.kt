@@ -1,5 +1,9 @@
 package com.solanteq.solar.backoffice
 
+import com.solanteq.solar.backoffice.exception.ErrorTracker
+import com.solanteq.solar.backoffice.parser.ArgumentParser
+import com.solanteq.solar.backoffice.parser.SchemaParser
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,7 +20,9 @@ class ArgsTest {
         args[0] = "-a"
         args[1] = "-c"
         args[2] = "-b"
-        val argsParser = Args(schema, args)
+        val schemaParser = SchemaParser(schema)
+        val argumentParser = ArgumentParser(listOf(*args), ErrorTracker())
+        val argsParser = Args(schemaParser, argumentParser)
         argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
@@ -38,7 +44,7 @@ class ArgsTest {
         assertTrue(argsParser.get('b') as Boolean)
 
         println("boolean value for c: ${argsParser.get('c')}")
-        assertFalse(argsParser.get('c') as Boolean)
+        assertNull(argsParser.get('c'))
 
         println("boolean value for d: ${argsParser.get('d')}")
         assertFalse(argsParser.get('d') as Boolean)
@@ -54,7 +60,9 @@ class ArgsTest {
         args[3] = "test3"
         args[4] = "-b"
         args[5] = "test2"
-        val argsParser = Args(schema, args)
+        val schemaParser = SchemaParser(schema)
+        val argumentParser = ArgumentParser(listOf(*args), ErrorTracker())
+        val argsParser = Args(schemaParser, argumentParser)
         argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
@@ -76,7 +84,7 @@ class ArgsTest {
         assertEquals("test2", argsParser.get('b'))
 
         println("string value for c: ${argsParser.get('c')}")
-        assertTrue((argsParser.get('c') as String).isEmpty())
+        assertNull(argsParser.get('c'))
 
         println("string value for d: ${argsParser.get('d')}")
         assertTrue((argsParser.get('d') as String).isEmpty())
@@ -94,7 +102,9 @@ class ArgsTest {
         args[5] = "-1"
         args[6] = "-f"
         args[7] = "notInt"
-        val argsParser = Args(schema, args)
+        val schemaParser = SchemaParser(schema)
+        val argumentParser = ArgumentParser(listOf(*args), ErrorTracker())
+        val argsParser = Args(schemaParser, argumentParser)
         argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
@@ -116,7 +126,7 @@ class ArgsTest {
         assertEquals(-1, argsParser.get('b'))
 
         println("int value for c: ${argsParser.get('c')}")
-        assertEquals(0, argsParser.get('c'))
+        assertNull(argsParser.get('c'))
 
         println("int value for d: ${argsParser.get('d')}")
         assertEquals(0, argsParser.get('d'))
@@ -134,7 +144,9 @@ class ArgsTest {
         args[2] = "someString"
         args[3] = "-c"
         args[4] = "7"
-        val argsParser = Args(schema, args)
+        val schemaParser = SchemaParser(schema)
+        val argumentParser = ArgumentParser(listOf(*args), ErrorTracker())
+        val argsParser = Args(schemaParser, argumentParser)
         argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
@@ -162,7 +174,9 @@ class ArgsTest {
         val args = Array(2) { "" }
         args[0] = "-a"
         args[1] = "test"
-        val argsParser = Args(schema, args)
+        val schemaParser = SchemaParser(schema)
+        val argumentParser = ArgumentParser(listOf(*args), ErrorTracker())
+        val argsParser = Args(schemaParser, argumentParser)
         argsParser.parse()
 
         println("is valid: ${argsParser.isValid()}")
@@ -174,7 +188,7 @@ class ArgsTest {
         println("usage: ${argsParser.usage()}")
         assertEquals("-[a!]", argsParser.usage())
 
-        println("boolean value for a: ${argsParser.get('a')}")
-        assertTrue((argsParser.get('a') as String).isEmpty())
+        println("any value for a: ${argsParser.get('a')}")
+        assertNull(argsParser.get('a'))
     }
 }

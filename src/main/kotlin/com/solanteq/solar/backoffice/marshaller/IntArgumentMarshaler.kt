@@ -6,7 +6,7 @@ import com.solanteq.solar.backoffice.exception.ErrorCode
 /**
  * @since %CURRENT_VERSION%
  */
-class IntArgumentMarshaller(override var value: Int = 0) : ArgumentMarshaller<Int>() {
+class IntArgumentMarshaler(override var value: Int = 0) : ArgumentMarshaler<Int>() {
     override fun set(currentArgument: Iterator<String>?): Boolean {
         try {
             val currentValue = currentArgument?.next()
