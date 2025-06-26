@@ -1,12 +1,10 @@
-package com.solanteq.solar.backoffice.marshaller
+package org.kia.marshaler.impl
 
-import com.solanteq.solar.backoffice.exception.ArgsException
-import com.solanteq.solar.backoffice.exception.ErrorCode
+import org.kia.exception.ArgsException
+import org.kia.exception.code.ErrorCode
+import org.kia.marshaler.AbstractArgumentMarshaler
 
-/**
- * @since %CURRENT_VERSION%
- */
-class IntArgumentMarshaler(override var value: Int = 0) : ArgumentMarshaler<Int>() {
+class IntArgumentMarshaler(override var value: Int = 0) : AbstractArgumentMarshaler<Int>() {
     override fun set(currentArgument: Iterator<String>?): Boolean {
         try {
             val currentValue = currentArgument?.next()

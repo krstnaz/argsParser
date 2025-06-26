@@ -1,28 +1,30 @@
-package com.solanteq.solar.backoffice.parser
+package org.kia.parser
 
-import com.solanteq.solar.backoffice.exception.ArgsException
-import com.solanteq.solar.backoffice.exception.ErrorTracker
-import com.solanteq.solar.backoffice.marshaller.ArgumentMarshaler
+import org.kia.exception.ArgsException
+import org.kia.exception.ErrorTracker
+import org.kia.marshaler.AbstractArgumentMarshaler
 
 class ArgumentParser(
-    private val args: List<String>,
-    val errorTracker: ErrorTracker
+    private val args: List<String>
 ) {
     private lateinit var currentArgument: Iterator<String>
-    private lateinit var marshallers: MutableMap<Char, ArgumentMarshaler<*>>
+    private lateinit var marshalers: MutableMap<Char, AbstractArgumentMarshaler<*>>
+    val errorTracker: ErrorTracker = ErrorTracker()
     val argsFound: MutableSet<Char> = mutableSetOf()
 
-    fun parse(marshallers: MutableMap<Char, ArgumentMarshaler<*>>): MutableMap<Char, ArgumentMarshaler<*>> {
-        if (args.isEmpty() && marshallers.isEmpty()) {
+    fun parse(
+        marshalers: MutableMap<Char, AbstractArgumentMarshaler<*>>
+    ): MutableMap<Char, AbstractArgumentMarshaler<*>> {
+        if (args.isEmpty() && marshalers.isEmpty()) {
             return mutableMapOf()
         }
-        this.marshallers = marshallers
+        this.marshalers = marshalers
         currentArgument = args.iterator()
         while (currentArgument.hasNext()) {
             val arg = currentArgument.next()
             parseArgument(arg)
         }
-        return this.marshallers
+        return this.marshalers
     }
 
     private fun parseArgument(arg: String) {
@@ -33,7 +35,7 @@ class ArgumentParser(
 
     private fun parseElements(arg: String) {
         for (i in 1..<arg.length) {
-            if (marshallers.containsKey(arg[i])) {
+            if (marshalers.containsKey(arg[i])) {
                 parseElement(arg[i])
             } else {
                 errorTracker.addUnexpectedArgument(arg[i])
@@ -48,9 +50,9 @@ class ArgumentParser(
     }
 
     private fun setArgument(argChar: Char): Boolean {
-        val marshaller = marshallers[argChar]
+        val marshaler = marshalers[argChar]
         try {
-            return marshaller?.set(currentArgument) ?: false
+            return marshaler?.set(currentArgument) ?: false
         } catch (e: ArgsException) {
             errorTracker.addErrorArgument(argChar, e.errorCode)
             return false

@@ -1,11 +1,11 @@
-package com.solanteq.solar.backoffice.exception
+package org.kia.exception
 
-/**
- * @since %CURRENT_VERSION%
- */
+import org.kia.exception.code.ErrorCode
+
 class ErrorTracker {
     private val errorArguments = mutableMapOf<Char, ErrorCode>()
     private val unexpectedArguments = sortedSetOf<Char>()
+    private val unexpectedSchemaElements = sortedSetOf<String>()
     private var valid: Boolean = true
 
     fun addUnexpectedArgument(arg: Char) {
@@ -15,6 +15,11 @@ class ErrorTracker {
 
     fun addErrorArgument(arg: Char, code: ErrorCode) {
         errorArguments[arg] = code
+        makeInvalid()
+    }
+
+    fun addUnexpectedSchemaElement(element: String) {
+        unexpectedSchemaElements.add(element)
         makeInvalid()
     }
 
@@ -29,13 +34,20 @@ class ErrorTracker {
     fun describe(): String {
         val unexpectedArgumentDescription = getUnexpectedArgumentDescription()
         val errorArgumentsDescription = getErrorArgumentsDescription()
-        return concatenateStrings(unexpectedArgumentDescription, errorArgumentsDescription)
+        val unexpectedSchemaElementsDescription = getUnexpectedSchemaElementsDescription()
+        return concatenateStrings(
+            unexpectedArgumentDescription,
+            errorArgumentsDescription,
+            unexpectedSchemaElementsDescription
+        )
     }
 
     private fun buildErrorMessage(errorArgument: Char, errorCode: ErrorCode) = when (errorCode) {
         ErrorCode.MISSING_STRING -> "Could not find string parameter for -$errorArgument."
         ErrorCode.MISSING_INT -> "Could not find int parameter for -$errorArgument."
         ErrorCode.INVALID_INT -> "Invalid int parameter for -$errorArgument."
+        ErrorCode.MISSING_DOUBLE -> "Could not find double parameter for -$errorArgument."
+        ErrorCode.INVALID_DOUBLE -> "Invalid double parameter for -$errorArgument."
         ErrorCode.OK -> throw Exception("TILT: Should not get here.")
     }
 
@@ -44,7 +56,15 @@ class ErrorTracker {
             return null
         }
         val unexpectedArgumentsString = unexpectedArguments.joinToString(",")
-        return "Argument(s) - $unexpectedArgumentsString unexpected."
+        return "Argument(s) $unexpectedArgumentsString unexpected."
+    }
+
+    private fun getUnexpectedSchemaElementsDescription(): String? {
+        if (unexpectedSchemaElements.isEmpty()) {
+            return null
+        }
+        val unexpectedSchemaElementsString = unexpectedSchemaElements.joinToString(",")
+        return "Schema element(s) $unexpectedSchemaElementsString unexpected."
     }
 
     private fun getErrorArgumentsDescription(): String? {
@@ -54,7 +74,7 @@ class ErrorTracker {
         return errorArguments.map { (argument, code) -> buildErrorMessage(argument, code) }.joinToString("\n")
     }
 
-    fun concatenateStrings(str1: String?, str2: String?): String {
-        return listOfNotNull(str1, str2).joinToString(separator = "\n")
+    private fun concatenateStrings(vararg values: String?): String {
+        return listOfNotNull(*values).joinToString(separator = "\n")
     }
 }

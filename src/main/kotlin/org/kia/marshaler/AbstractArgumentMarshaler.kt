@@ -1,9 +1,6 @@
-package com.solanteq.solar.backoffice.marshaller
+package org.kia.marshaler
 
-/**
- * @since %CURRENT_VERSION%
- */
-abstract class ArgumentMarshaler<T> {
+abstract class AbstractArgumentMarshaler<T> {
     abstract var value: T
 
     abstract fun set(currentArgument: Iterator<String>? = null): Boolean
